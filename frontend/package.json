@@ -2,7 +2,7 @@
   "name": "book-database-frontend",
   "version": "1.0.0",
   "description": "Frontend for Book Database application",
-  "homepage": "https://yourusername.github.io/book-database",
+  "homepage": "https://dpaq7.github.io/book-database",
   "scripts": {
     "start": "parcel public/index.html",
     "build": "parcel build public/index.html",

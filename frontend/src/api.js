@@ -1,8 +1,8 @@
-// API Service for handling all server communication
+// API Service for handling API requests
 export const apiService = {
   // Base URL for API requests
   baseUrl: process.env.NODE_ENV === 'production' 
-    ? 'https://your-backend-url.com/api' // Replace with your deployed backend URL
+    ? 'https://book-database-backend.onrender.com/api' // Replace with your deployed backend URL when available
     : 'http://localhost:5001/api',
   
   // Initialize the API service
