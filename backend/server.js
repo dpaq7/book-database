@@ -24,10 +24,16 @@ app.use(express.json());
 // MongoDB Connection
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
-  useUnifiedTopology: true
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 30000, // Increase timeout to 30 seconds
+  socketTimeoutMS: 45000, // Increase socket timeout to 45 seconds
+  family: 4 // Use IPv4, skip trying IPv6
 })
-.then(() => console.log('MongoDB Atlas connected'))
-.catch(err => console.error('MongoDB connection error:', err));
+.then(() => {
+  console.log('Connected to MongoDB Atlas');
+  importInitialData();
+})
+.catch(err => console.error('Error connecting to MongoDB:', err));
 
 // Book Schema
 const bookSchema = new mongoose.Schema({
@@ -400,50 +406,72 @@ app.put('/api/challenges/:year', async (req, res) => {
 // Import initial data from the JSON file
 const importInitialData = async () => {
   try {
-    const count = await Book.countDocuments();
+    console.log('Checking if initial data import is needed...');
+    const count = await Book.countDocuments().maxTimeMS(30000); // Add timeout for this operation
     
     if (count === 0) {
       console.log('Importing initial data...');
       const filePath = path.join(__dirname, '..', 'Goodreads Library Export.json');
       
       if (fs.existsSync(filePath)) {
-        const fileContent = fs.readFileSync(filePath, 'utf8');
-        const books = JSON.parse(fileContent);
-        
-        // Transform keys to match our schema
-        const transformedBooks = books.map(book => ({
-          bookId: book['Book Id'],
-          title: book['Title'],
-          author: book['Author'],
-          authorByLastName: book['Author (By Last Name)'],
-          additionalAuthors: book['Additional Authors'],
-          isbn: book['ISBN'],
-          isbn13: book['ISBN13'],
-          rating: book['Rating'],
-          averageRating: book['Average Rating'],
-          publisher: book['Publisher'],
-          binding: book['Binding'],
-          pages: book['Pages'],
-          beq: book['BEq'],
-          editionPublished: book['Edition Published'],
-          published: book['Published'],
-          dateRead: book['Date Read'],
-          dateAdded: book['Date Added'],
-          bookshelves: book['Bookshelves'],
-          bookshelvesWithPositions: book['Bookshelves with positions'],
-          exclusiveShelf: book['Exclusive Shelf'],
-          myReview: book['My Review'],
-          spoiler: book['Spoiler'],
-          privateNotes: book['Private Notes'],
-          readCount: book['Read Count'],
-          ownedCopies: book['Owned Copies']
-        }));
-        
-        await Book.insertMany(transformedBooks);
-        console.log(`Successfully imported ${transformedBooks.length} books`);
+        try {
+          const fileContent = fs.readFileSync(filePath, 'utf8');
+          let books;
+          
+          try {
+            books = JSON.parse(fileContent);
+            console.log(`Parsed ${books.length} books from JSON file`);
+          } catch (parseError) {
+            console.error('Error parsing JSON file:', parseError);
+            return;
+          }
+          
+          // Transform keys to match our schema
+          const transformedBooks = books.map(book => ({
+            bookId: book['Book Id'],
+            title: book['Title'],
+            author: book['Author'],
+            authorByLastName: book['Author (By Last Name)'],
+            additionalAuthors: book['Additional Authors'],
+            isbn: book['ISBN'],
+            isbn13: book['ISBN13'],
+            rating: book['Rating'],
+            averageRating: book['Average Rating'],
+            publisher: book['Publisher'],
+            binding: book['Binding'],
+            pages: book['Pages'],
+            beq: book['BEq'],
+            editionPublished: book['Edition Published'],
+            published: book['Published'],
+            dateRead: book['Date Read'],
+            dateAdded: book['Date Added'],
+            bookshelves: book['Bookshelves'],
+            bookshelvesWithPositions: book['Bookshelves with positions'],
+            exclusiveShelf: book['Exclusive Shelf'],
+            myReview: book['My Review'],
+            spoiler: book['Spoiler'],
+            privateNotes: book['Private Notes'],
+            readCount: book['Read Count'],
+            ownedCopies: book['Owned Copies']
+          }));
+          
+          // Insert in smaller batches to avoid timeout
+          const batchSize = 100;
+          for (let i = 0; i < transformedBooks.length; i += batchSize) {
+            const batch = transformedBooks.slice(i, i + batchSize);
+            await Book.insertMany(batch, { timeout: 30000 });
+            console.log(`Imported batch ${i/batchSize + 1}/${Math.ceil(transformedBooks.length/batchSize)}`);
+          }
+          
+          console.log(`Successfully imported ${transformedBooks.length} books`);
+        } catch (fileError) {
+          console.error('Error reading or processing file:', fileError);
+        }
       } else {
         console.log('Initial data file not found');
       }
+    } else {
+      console.log(`Database already contains ${count} books, skipping import`);
     }
   } catch (err) {
     console.error('Error importing initial data:', err);
@@ -453,5 +481,4 @@ const importInitialData = async () => {
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  importInitialData();
 });
