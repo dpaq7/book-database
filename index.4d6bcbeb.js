@@ -720,7 +720,7 @@ parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "apiService", ()=>apiService);
 const apiService = {
     // Base URL for API requests
-    baseUrl: 'http://localhost:5001/api',
+    baseUrl: 'http://localhost:10000/api',
     // Initialize the API service
     init () {
         console.log('API Service initialized in development mode');
