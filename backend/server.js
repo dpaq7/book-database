@@ -1,3 +1,6 @@
+// Load environment variables
+require('dotenv').config();
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -9,12 +12,17 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+// MongoDB connection string
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://paquindan:AT0uoftDxFZ9odov@cluster0.anoa6.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:1234', 'http://localhost:55705', 'https://dpaq7.github.io']
+}));
 app.use(express.json());
 
 // MongoDB Connection
-mongoose.connect('mongodb+srv://paquindan:AT0uoftDxFZ9odov@cluster0.anoa6.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', {
+mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })

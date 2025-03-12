@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: book-database-backend
+    runtime: node
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && node server.js
+    envVars:
+      - key: MONGODB_URI
+        value: mongodb+srv://paquindan:AT0uoftDxFZ9odov@cluster0.anoa6.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+      - key: PORT
+        value: 10000
