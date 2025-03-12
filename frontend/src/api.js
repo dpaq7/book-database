@@ -2,8 +2,8 @@
 export const apiService = {
   // Base URL for API requests
   baseUrl: process.env.NODE_ENV === 'production' 
-    ? 'https://book-database-backend.onrender.com/api' // Replace with your deployed backend URL when available
-    : 'http://localhost:5001/api',
+    ? 'https://book-database-backend.onrender.com/api' 
+    : 'http://localhost:10000/api',
   
   // Initialize the API service
   init() {
